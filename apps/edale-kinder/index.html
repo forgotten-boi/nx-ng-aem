@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Edale to Kinder Scout · Trail Tracker</title>
+    <meta
+      name="description"
+      content="Map, route guide and live GPS tracking for the classic Edale to Kinder Scout walk in the Peak District: Grindsbrook Clough, the summit and Jacob’s Ladder."
+    />
+    <meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <script defer src="vendor/leaflet/leaflet.js"></script>
+    <script type="module" src="js/main.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#panel">Skip to route and tracking</a>
+
+    <header class="app-header">
+      <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+        <rect width="64" height="64" rx="14" class="brand-bg" />
+        <path d="M8 50 22 30l6 7 10-17 18 30Z" class="brand-hill" />
+        <path d="M15 50c6-4 9-7 12-10s6-5 8-9 3-8 3-11" class="brand-route" />
+        <circle cx="38" cy="20" r="4" class="brand-peak" />
+      </svg>
+      <div class="brand-text">
+        <h1>Edale <span aria-hidden="true">→</span><span class="visually-hidden">to</span> Kinder Scout</h1>
+        <p class="subtitle">Peak District · map &amp; live tracking</p>
+      </div>
+      <span id="net-status" class="pill pill--offline" hidden>Offline</span>
+    </header>
+
+    <main class="layout">
+      <section class="map-pane" aria-label="Map">
+        <div id="map" class="map"></div>
+        <div id="hud" class="hud" aria-hidden="true"></div>
+      </section>
+
+      <section id="panel" class="panel" tabindex="-1">
+        <div class="tabs" role="tablist" aria-label="Sections">
+          <button type="button" role="tab" id="tab-track" aria-controls="view-track" aria-selected="true">Track</button>
+          <button type="button" role="tab" id="tab-route" aria-controls="view-route" aria-selected="false" tabindex="-1">Route</button>
+          <button type="button" role="tab" id="tab-safety" aria-controls="view-safety" aria-selected="false" tabindex="-1">Safety</button>
+        </div>
+
+        <!-- Track ------------------------------------------------------------------------------------------------>
+        <div class="view" role="tabpanel" id="view-track" aria-labelledby="tab-track">
+          <div class="actions" id="track-actions">
+            <button type="button" class="btn btn--primary" id="btn-start">Start tracking</button>
+            <button type="button" class="btn btn--primary" id="btn-resume" hidden>Resume</button>
+            <button type="button" class="btn" id="btn-pause" hidden>Pause</button>
+            <button type="button" class="btn" id="btn-finish" hidden>Finish walk</button>
+            <button type="button" class="btn btn--quiet" id="btn-demo">Try a demo walk</button>
+          </div>
+          <div class="demo-bar" id="demo-bar" hidden>
+            <span class="pill pill--demo">Demo</span>
+            <label for="demo-speed">Speed</label>
+            <select id="demo-speed">
+              <option value="60">60×</option>
+              <option value="120" selected>120×</option>
+              <option value="300">300×</option>
+            </select>
+            <button type="button" class="btn btn--small" id="btn-demo-stop">Stop demo</button>
+          </div>
+
+          <p class="status" id="gps-status" role="status">GPS is off. Start tracking when you set off from Edale.</p>
+          <div class="alert" id="alert" role="alert" hidden></div>
+
+          <div class="hero" id="hero">
+            <p class="hero-label" id="hero-label">Circuit from Edale</p>
+            <p class="hero-value" id="hero-value">–</p>
+            <p class="hero-meta" id="hero-meta"></p>
+            <div
+              class="meter"
+              id="progress-meter"
+              role="progressbar"
+              aria-label="Route completed"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+              hidden
+            >
+              <span class="meter-fill" id="progress-fill"></span>
+            </div>
+          </div>
+
+          <dl class="tiles" id="tiles" hidden>
+            <div class="tile">
+              <dt>Walked</dt>
+              <dd id="t-walked">–</dd>
+            </div>
+            <div class="tile">
+              <dt>Time</dt>
+              <dd id="t-elapsed">–</dd>
+            </div>
+            <div class="tile">
+              <dt>To finish</dt>
+              <dd id="t-finish">–</dd>
+            </div>
+            <div class="tile">
+              <dt>Finish by</dt>
+              <dd id="t-eta">–</dd>
+            </div>
+            <div class="tile">
+              <dt>Height</dt>
+              <dd id="t-height">–</dd>
+            </div>
+            <div class="tile">
+              <dt>Climbed</dt>
+              <dd id="t-climbed">–</dd>
+            </div>
+            <div class="tile">
+              <dt>Speed</dt>
+              <dd id="t-speed">–</dd>
+            </div>
+            <div class="tile">
+              <dt>Moving time</dt>
+              <dd id="t-moving">–</dd>
+            </div>
+          </dl>
+
+          <section class="card" id="next-card" hidden aria-labelledby="next-title">
+            <h2 class="card-title" id="next-title">Next</h2>
+            <p class="next-name"><span id="next-name"></span> <span class="next-dist" id="next-dist"></span></p>
+            <p class="card-text" id="next-directions"></p>
+            <p class="card-note" id="section-note" hidden></p>
+          </section>
+
+          <section class="card" aria-labelledby="where-title">
+            <h2 class="card-title" id="where-title">Your location</h2>
+            <p class="gridref" id="gridref">No GPS fix yet</p>
+            <p class="card-text muted" id="latlon"></p>
+            <div class="row">
+              <button type="button" class="btn btn--small" id="btn-locate">Find me</button>
+              <button type="button" class="btn btn--small" id="btn-share" disabled>Share location</button>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="daylight-title">
+            <h2 class="card-title" id="daylight-title">Daylight</h2>
+            <p class="card-text" id="daylight"></p>
+          </section>
+
+          <section class="card" aria-labelledby="mytrack-title">
+            <h2 class="card-title" id="mytrack-title">Your track</h2>
+            <p class="card-text muted" id="track-info">Nothing recorded yet. Your track stays on this device.</p>
+            <div class="row">
+              <button type="button" class="btn btn--small" id="btn-export" disabled>Download GPX</button>
+              <button type="button" class="btn btn--small btn--danger" id="btn-clear" disabled>Delete track</button>
+            </div>
+            <label class="check">
+              <input type="checkbox" id="opt-wakelock" />
+              <span>Keep the screen on while tracking</span>
+            </label>
+            <p class="card-note">
+              Phones pause GPS in the browser when the screen locks. Keep the screen on for a continuous track; otherwise the gaps are
+              joined up when you next look.
+            </p>
+          </section>
+        </div>
+
+        <!-- Route ------------------------------------------------------------------------------------------------>
+        <div class="view" role="tabpanel" id="view-route" aria-labelledby="tab-route" hidden>
+          <p class="lede" id="route-summary"></p>
+          <dl class="facts" id="route-facts"></dl>
+
+          <figure class="figure">
+            <figcaption class="figure-title">Elevation profile</figcaption>
+            <div id="profile"></div>
+          </figure>
+
+          <dl class="details" id="route-details"></dl>
+
+          <h2 class="section-title">Waypoints &amp; directions</h2>
+          <ol class="wp-list" id="wp-list"></ol>
+
+          <div class="row">
+            <button type="button" class="btn btn--small" id="btn-route-gpx">Download route GPX</button>
+          </div>
+          <p class="card-note" id="route-note"></p>
+        </div>
+
+        <!-- Safety ----------------------------------------------------------------------------------------------->
+        <div class="view prose" role="tabpanel" id="view-safety" aria-labelledby="tab-safety" hidden>
+          <section class="card card--critical" aria-labelledby="sos-title">
+            <h2 class="card-title" id="sos-title">In an emergency</h2>
+            <p>
+              Call <strong>999</strong> or <strong>112</strong>, ask for the <strong>Police</strong>, then <strong>Mountain Rescue</strong>.
+            </p>
+            <p>Your grid reference: <strong class="gridref-inline" id="sos-gridref">no GPS fix yet</strong></p>
+            <p>
+              No signal for a call? A text to 999 may get through — but only if you have registered with
+              <a href="https://www.emergencysms.org.uk/" rel="noopener" target="_blank">emergencySMS</a> first: text <q>register</q> to 999
+              and follow the reply.
+            </p>
+          </section>
+
+          <h2 class="section-title">Before you go</h2>
+          <ul>
+            <li>
+              Check the mountain forecast:
+              <a href="https://www.metoffice.gov.uk/weather/specialist-forecasts/mountain/peak-district" rel="noopener" target="_blank"
+                >Met Office (Peak District)</a
+              >
+              and <a href="https://www.mwis.org.uk/forecasts/english-and-welsh/peak-district" rel="noopener" target="_blank">MWIS</a>. The
+              plateau is far wilder than the valley, and cloud can come down quickly.
+            </li>
+            <li>
+              Carry <strong>OS Explorer OL1</strong> (Dark Peak) and a compass, and know how to use them — phone batteries fade fast in the
+              cold.
+            </li>
+            <li>Waterproofs, warm layers, hat and gloves, food, water, a head torch and a charged phone (plus a power bank).</li>
+            <li>Tell someone your route and when you expect to be back. Allow 4–5 hours including stops.</li>
+          </ul>
+
+          <h2 class="section-title">On the hill</h2>
+          <ul>
+            <li>
+              The top of <strong>Grindsbrook Clough</strong> is a scramble up a rocky stream bed: slippery when wet and dangerous when the
+              brook is in spate. In winter it can need winter skills and kit.
+            </li>
+            <li>
+              The edge path is clear, but the plateau interior — including the true summit — is a maze of peat groughs where it is easy to
+              get lost in mist.
+            </li>
+            <li>
+              Stay on the paths to protect the restored moorland. Dogs must be on a short lead on access land from 1 March to 31 July, and
+              near livestock at any time.
+            </li>
+            <li>Moorland fires spread fast: no barbecues or fires. Report any fire on 999.</li>
+          </ul>
+
+          <h2 class="section-title">Getting there</h2>
+          <ul>
+            <li><strong>Train:</strong> Edale station is on the Hope Valley line between Manchester Piccadilly and Sheffield.</li>
+            <li><strong>Car:</strong> pay and display car park in Edale beside the station; it fills early at weekends.</li>
+            <li>Pubs and a café in Edale — nothing on the hill.</li>
+          </ul>
+
+          <h2 class="section-title">About this app</h2>
+          <ul>
+            <li>
+              The route line is compiled from published grid references of landmarks; points between them, distances and most heights are
+              approximate. Use it alongside a map, not instead of one.
+            </li>
+            <li>Tracking uses your phone’s GPS. Your position and track never leave this device unless you share or download them.</li>
+            <li>
+              Map data © <a href="https://www.openstreetmap.org/copyright" rel="noopener" target="_blank">OpenStreetMap</a> contributors;
+              map style © OpenTopoMap (CC-BY-SA). Built with <a href="https://leafletjs.com" rel="noopener" target="_blank">Leaflet</a>.
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <div class="fatal" id="fatal" role="alert" hidden></div>
+    <noscript><p class="fatal">This app needs JavaScript for the map and tracking.</p></noscript>
+  </body>
+</html>

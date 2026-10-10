@@ -1,0 +1,20 @@
+{
+  "name": "nx-ng-aem",
+  "private": true,
+  "description": "Edale to Kinder Scout trail tracker — a static web app (apps/edale-kinder).",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node tools/serve.mjs apps/edale-kinder",
+    "build:route": "node tools/build-route.mjs",
+    "check:route": "node tools/build-route.mjs --check",
+    "test": "node --test \"tests/unit/*.test.mjs\"",
+    "test:e2e": "playwright test",
+    "test:all": "npm run check:route && npm test && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

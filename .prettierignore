@@ -1,0 +1,6 @@
+node_modules/
+apps/edale-kinder/vendor/
+apps/edale-kinder/data/route.json
+test-results/
+playwright-report/
+package-lock.json
