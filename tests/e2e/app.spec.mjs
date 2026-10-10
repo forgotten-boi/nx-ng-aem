@@ -55,6 +55,31 @@ test.describe('route and map', () => {
   });
 });
 
+test.describe('sharing', () => {
+  test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
+
+  test('Share copies the app link when there is no share sheet', async ({ page }) => {
+    await page.goto('./?from=test#route');
+    await page.evaluate(() => {
+      delete Navigator.prototype.share; // desktop browsers without Web Share
+    });
+    await page.getByRole('button', { name: 'Share this app' }).click();
+    await expect(page.locator('.share-app-label')).toHaveText('Link copied');
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    expect(copied).toBe(new URL('./', page.url()).href);
+  });
+
+  test('link previews have a title and image', async ({ page, request }) => {
+    await page.goto('./');
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'Edale to Kinder Scout · Trail Tracker');
+    const image = await page.locator('meta[property="og:image"]').getAttribute('content');
+    expect(image).toMatch(/^https:\/\/.+\/icons\/social-card\.png$/);
+    const response = await request.get('icons/social-card.png');
+    expect(response.ok()).toBe(true);
+    expect(response.headers()['content-type']).toBe('image/png');
+  });
+});
+
 test.describe('live tracking', () => {
   test.use({ permissions: ['geolocation'], geolocation: along(0) });
 

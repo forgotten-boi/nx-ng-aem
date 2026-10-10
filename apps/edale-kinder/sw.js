@@ -4,7 +4,7 @@
  * - Map tiles: cache first; every tile you have viewed stays available offline (oldest dropped past a cap).
  * Bump VERSION whenever an app file changes.
  */
-const VERSION = '1';
+const VERSION = '2';
 const APP_CACHE = `edale-kinder-app-v${VERSION}`;
 const TILE_CACHE = 'edale-kinder-tiles-v1';
 const MAX_TILES = 2500;

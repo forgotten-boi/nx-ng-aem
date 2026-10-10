@@ -60,14 +60,21 @@ You don't need to be in Edale to try the tracking screen. **Try a demo walk** re
   don't, the gaps are joined up the next time you look.
 - Your track is saved on the device as you go, so it survives a reload, and you can download it as GPX.
 
-## Deploy
+## Share it
 
-The site is the `apps/edale-kinder/` folder. There's nothing to build.
+The app is hosted free on GitHub Pages at **https://forgotten-boi.github.io/nx-ng-aem/**. That address redirects to the
+app at `/nx-ng-aem/apps/edale-kinder/`.
 
-- **GitHub Pages:** Settings → Pages → _Deploy from a branch_ → pick the branch and `/ (root)`. The root `index.html`
-  redirects to the app at `https://<user>.github.io/nx-ng-aem/apps/edale-kinder/`. `.nojekyll` skips Jekyll.
-- **Netlify / Cloudflare Pages / Azure Static Web Apps:** set the publish directory (`app_location`) to
-  `apps/edale-kinder` and leave the build command empty.
+To switch hosting on (once): open [Settings → Pages](https://github.com/forgotten-boi/nx-ng-aem/settings/pages), set
+**Source** to _Deploy from a branch_, pick the branch the app is on and `/ (root)`, then **Save**. GitHub publishes it
+within a minute or two, and re-publishes on every push to that branch. `.nojekyll` makes Pages serve the files as they are.
+
+In the app, the **Share** button opens your phone's share sheet, or copies the link on a computer. Shared links show a
+preview card with the route (`icons/social-card.png`). The card's address is set in the `og:image` tags of both
+`index.html` files, so update those if you host the app somewhere else.
+
+Other static hosts work too: on Netlify, Cloudflare Pages or Azure Static Web Apps, set the publish directory
+(`app_location`) to `apps/edale-kinder` and leave the build command empty.
 
 When you change any app file, bump `VERSION` in [`apps/edale-kinder/sw.js`](apps/edale-kinder/sw.js) so installed copies
 refresh their cache.
@@ -91,7 +98,7 @@ tools/
   route-source.mjs          route definition in OS grid references, with sources
   build-route.mjs           → data/route.json (npm run build:route)
   serve.mjs                 zero-dependency dev server
-  render-icons.mjs          icon.svg → PNG icons
+  render-images.mjs         icon.svg → PNG icons, route → social-card.png
 tests/unit/                 node:test — geodesy, route, tracker, GPX, sunset
 tests/e2e/                  Playwright — map, profile, mocked-GPS tracking, reload, demo, offline
 ```

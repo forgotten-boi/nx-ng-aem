@@ -71,6 +71,35 @@ const fixFromPosition = (pos) => ({
   timestamp: Math.abs((pos.timestamp || 0) - Date.now()) < 86400000 ? pos.timestamp : Date.now(),
 });
 
+/** Share through the phone's share sheet where there is one, otherwise copy `copy` to the clipboard. */
+async function shareOrCopy({ title, text, url, copy = text ? `${text} ${url}` : url }) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text, url });
+      return 'shared';
+    } catch (err) {
+      if (err.name === 'AbortError') return 'cancelled'; // share sheet closed
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(copy);
+    return 'copied';
+  } catch {
+    prompt('Copy this:', copy);
+    return 'shown';
+  }
+}
+
+/** Swap an element's text for a moment, e.g. "Copied". */
+function flash(el, text) {
+  el.dataset.label ??= el.textContent;
+  el.textContent = text;
+  clearTimeout(el.flashTimer);
+  el.flashTimer = setTimeout(() => {
+    el.textContent = el.dataset.label;
+  }, 2000);
+}
+
 const gridRef8 = (fix) => {
   const g = wgs84ToGrid(fix.lat, fix.lon);
   return formatGridRef(g.easting, g.northing, 8);
@@ -379,6 +408,7 @@ class App {
       } else this.locateOnce();
     });
     $('btn-share').addEventListener('click', () => this.shareLocation());
+    $('btn-share-app').addEventListener('click', () => this.shareApp());
     $('btn-export').addEventListener('click', () => {
       const s = this.live.state;
       const day = new Date(s.startedAt ?? Date.now()).toISOString().slice(0, 10);
@@ -434,24 +464,17 @@ class App {
     const lon = fix.lon.toFixed(5);
     const text = `My location: ${gridRef8(fix)} (${lat}, ${lon}, ±${Math.round(fix.accuracy)} m) — Kinder Scout, Peak District.`;
     const url = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'My location', text, url });
-        return;
-      } catch (err) {
-        if (err.name === 'AbortError') return;
-      }
-    }
-    const btn = $('btn-share');
-    try {
-      await navigator.clipboard.writeText(`${text} ${url}`);
-      btn.textContent = 'Copied';
-      setTimeout(() => {
-        btn.textContent = 'Share location';
-      }, 2000);
-    } catch {
-      prompt('Copy your location:', `${text} ${url}`);
-    }
+    if ((await shareOrCopy({ title: 'My location', text, url })) === 'copied') flash($('btn-share'), 'Copied');
+  }
+
+  async shareApp() {
+    const result = await shareOrCopy({
+      title: 'Edale to Kinder Scout',
+      text: 'Route, map and live GPS tracking for the Edale to Kinder Scout walk in the Peak District.',
+      url: location.origin + location.pathname,
+      copy: location.origin + location.pathname,
+    });
+    if (result === 'copied') flash($('btn-share-app').querySelector('.share-app-label'), 'Link copied');
   }
 
   tick() {
